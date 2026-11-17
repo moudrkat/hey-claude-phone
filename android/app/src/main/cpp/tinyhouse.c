@@ -2,7 +2,9 @@
 // decides what it may do. Here that is drawing the home screen: rows of text, with live values left as markers
 // that the page fills in (LocalScreen.kt), so nothing is fetched from C.
 //
-//   \x01t\x02 the time      \x01d\x02 the date      \x01w|Prague\x02 weather there      \x01p|bitcoin\x02 its price
+//   \x01t\x02 the time    \x01d\x02 the date    \x01w|Prague\x02 weather there    \x01p|bitcoin\x02 its price
+//   \x01f|Prague\x02 tomorrow there    \x01r|..\x02 sunrise    \x01s|..\x02 sunset    \x01a|..\x02 the air
+//   \x01u|christmas\x02 days until    \x01n\x02 a headline    \x01j\x02 the name day
 //
 // tiny/ is the tiny-house runtime (github.com/moudrkat): llm.h and bpe_tokenizer.h in it are Viacheslav Sierbov's
 // slvDev/esp32-ai (MIT), the rest is the home language and its interpreter.
@@ -20,17 +22,19 @@ static int LOADED;
 static const char *PRICED[] = {"bitcoin", "btc", "ethereum", "eth", "solana", "dogecoin", "euro", "dollar", "pound", 0};
 
 static void now(void *self, int date, char *out, int n) { (void)self; snprintf(out, n, "\x01%c\x02", date ? 'd' : 't'); }
-static int look(void *self, int price, const char *what, char *out, int n) {
+static int look(void *self, int which, const char *what, char *out, int n) {
   (void)self;
+  static const char MARK[HL_SOURCES] = {'w', 'p', 'f', 'r', 's', 'a', 'u', 'n', 'j'};
+  if (which == HL_NEWS || which == HL_NAMEDAY) { snprintf(out, n, "\x01%c\x02", MARK[which]); return 0; }
   char low[HL_SAY + 2]; int L = 0;
   for (const char *p = what; *p && L < HL_SAY; p++) low[L++] = *p >= 'A' && *p <= 'Z' ? *p + 32 : *p;
   low[L] = 0;
-  if (price) {
+  if (which == HL_PRICE) {
     for (int i = 0; PRICED[i]; i++) if (strstr(low, PRICED[i])) { snprintf(out, n, "\x01p|%s\x02", PRICED[i]); return 0; }
     return -1;
   }
   for (const char *p = what; *p; p++) if (*p == '|' || *p == 1 || *p == 2) return -1;
-  snprintf(out, n, "\x01w|%.40s\x02", what);
+  snprintf(out, n, "\x01%c|%.40s\x02", MARK[which], which == HL_UNTIL ? low : what);   // a place or a day: the page looks it up
   return 0;
 }
 

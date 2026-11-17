@@ -27,7 +27,7 @@ typedef struct {
   void (*apply)(void *self, int dev, int what, int value);            // what: 0 on, 1 level. NULL: memory only
   void (*said)(void *self, const char *text);
   void (*now)(void *self, int date, char *out, int n);
-  int (*look)(void *self, int price, const char *what, char *out, int n);   // 0 found, -1 not in the catalogue
+  int (*look)(void *self, int which, const char *what, char *out, int n);   // which: HL_WEATHER...; 0 found, -1 not in the catalogue
   void (*pause)(void *self, long ms);
 } hm_home;
 
@@ -148,10 +148,10 @@ static int hm_row(void *ctx, int size, const char *text, char *err) {
   return 0;
 }
 static void hm_now(void *ctx, int date, char *out, int n) { hm_home *h = (hm_home *)ctx; if (h->now) h->now(h, date, out, n); else snprintf(out, n, "%s", date ? "Tue 17 Nov" : "14:05"); }
-static int hm_look(void *ctx, int price, const char *what, char *out, int n, char *err) {
+static int hm_look(void *ctx, int which, const char *what, char *out, int n, char *err) {
   hm_home *h = (hm_home *)ctx;
-  if (h->look && h->look(h, price, what, out, n) == 0) return 0;
-  snprintf(err, HL_ERR, "I don't know the %s of \"%s\"", price ? "price" : "weather", what); return -1;
+  if (h->look && h->look(h, which, what, out, n) == 0) return 0;
+  snprintf(err, HL_ERR, "I don't know the %s of \"%s\"", OL_FN[F_WEATHER + which], what); return -1;
 }
 static hl_io hm_io(hm_home *h) {
   hl_io io = {h, hm_sw, hm_set, hm_is_on, hm_temp, hm_wait, hm_say, hm_clear, hm_row, hm_now, hm_look, 0};

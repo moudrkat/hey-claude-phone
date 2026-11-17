@@ -49,7 +49,7 @@ typedef struct {
   void (*clear)(void *ctx);                                              // an empty screen
   int (*row)(void *ctx, int size, const char *text, char *err);          // 0 big, 1 line, 2 small; -1: the screen is full
   void (*now)(void *ctx, int date, char *out, int n);                    // time() or date() as text
-  int (*look)(void *ctx, int price, const char *what, char *out, int n, char *err);   // weather(what) or price(what)
+  int (*look)(void *ctx, int which, const char *what, char *out, int n, char *err);   // a source, HL_WEATHER..HL_NAMEDAY
   void (*done)(void *ctx);
 } ol_io;
 typedef ol_io hl_io;
@@ -66,11 +66,16 @@ enum {
   N_INT, N_STR, N_NAME, N_BIN, N_NEG, N_NOT, N_AND, N_OR, N_CMP, N_CALL,                // expressions
   N_EXPR, N_ASSIGN, N_AUG, N_IF, N_FOR, N_WHILE, N_BREAK, N_CONTINUE, N_PASS, N_BLOCK  // statements
 };
-enum { F_ON, F_OFF, F_SET, F_IS_ON, F_TEMP, F_WAIT, F_SAY, F_CLEAR, F_BIG, F_LINE, F_SMALL, F_TIME, F_DATE, F_WEATHER, F_PRICE,
+enum { F_ON, F_OFF, F_SET, F_IS_ON, F_TEMP, F_WAIT, F_SAY, F_CLEAR, F_BIG, F_LINE, F_SMALL, F_TIME, F_DATE,
+       F_WEATHER, F_PRICE, F_TOMORROW, F_SUNRISE, F_SUNSET, F_AIR, F_UNTIL, F_NEWS, F_NAMEDAY,      // the sources, in HL_ order
        F_STR, F_ABS, F_MIN, F_MAX, F_RANGE, F__N };
+enum { HL_WEATHER, HL_PRICE, HL_TOMORROW, HL_SUNRISE, HL_SUNSET, HL_AIR, HL_UNTIL, HL_NEWS, HL_NAMEDAY, HL_SOURCES };
 static const char *OL_FN[F__N] = {"on", "off", "set", "is_on", "temp", "wait", "say", "clear", "big", "line", "small", "time", "date",
-                                  "weather", "price", "str", "abs", "min", "max", "range"};
-static const int8_t OL_ARGS[F__N] = {1, 1, 2, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, -1, -1, -2};   // -1: 1+ args, -2: 1..3
+                                  "weather", "price", "tomorrow", "sunrise", "sunset", "air", "until", "news", "nameday",
+                                  "str", "abs", "min", "max", "range"};
+static const int8_t OL_ARGS[F__N] = {1, 1, 2, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0,
+                                     1, 1, 1, 1, 1, 1, 1, 0, 0,
+                                     1, 1, -1, -1, -2};   // -1: 1+ args, -2: 1..3
 
 // a node: kind, small op/fn field, int payload, and children as a linked list (first child, next sibling)
 typedef struct { uint8_t kind, op; int16_t first, next; int32_t ival; uint16_t sstart, slen; } ol_node;
@@ -521,12 +526,15 @@ static int ol_eval(ol_machine *m, int id, ol_val *out, ol_io *io) {
       char *p = ol_talloc(m, HL_SAY); if (!p) return -1;
       io->now(io->ctx, f == F_DATE, p, HL_SAY + 1); out->is_str = 1; out->s = p; out->n = (uint16_t)strlen(p); break;
     }
-    case F_WEATHER: case F_PRICE: {
-      int sp = 1; for (int q = 0; a[0].is_str && q < a[0].n; q++) if (a[0].s[q] != ' ') sp = 0;
-      if (!a[0].is_str || sp) { char b2[48]; snprintf(b2, sizeof b2, "%s() of what?", OL_FN[f]); return ol_fail(m, b2); }
-      HL_TEXT(0);
+    case F_WEATHER: case F_PRICE: case F_TOMORROW: case F_SUNRISE: case F_SUNSET: case F_AIR: case F_UNTIL: case F_NEWS: case F_NAMEDAY: {
+      w[0] = 0;
+      if (argc) {
+        int sp = 1; for (int q = 0; a[0].is_str && q < a[0].n; q++) if (a[0].s[q] != ' ') sp = 0;
+        if (!a[0].is_str || sp) { char b2[48]; snprintf(b2, sizeof b2, "%s() of what?", OL_FN[f]); return ol_fail(m, b2); }
+        HL_TEXT(0);
+      }
       char *p = ol_talloc(m, HL_SAY); if (!p) return -1;
-      if (io->look(io->ctx, f == F_PRICE, w, p, HL_SAY + 1, err)) return ol_fail(m, err);
+      if (io->look(io->ctx, f - F_WEATHER, w, p, HL_SAY + 1, err)) return ol_fail(m, err);
       out->is_str = 1; out->s = p; out->n = (uint16_t)strlen(p); break;
     }
     }
