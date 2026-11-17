@@ -67,6 +67,10 @@
     <string name="meeting_record">Nahrát poradu</string>
     <string name="meeting_end">Ukončit poradu</string>
     <string name="meeting_voice_hint">Nebo „%1$s, record the meeting“ a na konci „%1$s, end the meeting“.</string>
+    <string name="local_screen">Obrazovka z věty</string>
+    <string name="local_screen_hint">Obrazovku napíše malý model v telefonu, bez Clauda: hodiny, datum, počasí dnes a zítra, východ a západ slunce, vzduch, ceny, dny do nějakého dne, zprávy, jmeniny. Anglicky.</string>
+    <string name="local_screen_example">put a big clock and the bitcoin price there</string>
+    <string name="local_screen_show">Zobrazit</string>
     <string name="reset_defaults">Obnovit výchozí</string>
     <string name="reset_defaults_hint">Hodiny místo vlastní obrazovky a nastavení jako na začátku.</string>
     <string name="reset_confirm">Vrátit hodiny a výchozí nastavení? Vlastní obrazovka se smaže.</string>

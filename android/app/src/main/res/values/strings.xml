@@ -67,6 +67,10 @@
     <string name="meeting_record">Record a meeting</string>
     <string name="meeting_end">End the meeting</string>
     <string name="meeting_voice_hint">Or “%1$s, record the meeting” and at the end “%1$s, end the meeting”.</string>
+    <string name="local_screen">Home screen from a sentence</string>
+    <string name="local_screen_hint">A small model in the phone writes the screen, without Claude: clock, date, weather today and tomorrow, sunrise and sunset, the air, prices, days until a day, the news, the name day. In English.</string>
+    <string name="local_screen_example">put a big clock and the bitcoin price there</string>
+    <string name="local_screen_show">Show</string>
     <string name="reset_defaults">Restore defaults</string>
     <string name="reset_defaults_hint">The clock instead of a custom screen, and settings as at the start.</string>
     <string name="reset_confirm">Restore the clock and default settings? The custom screen will be deleted.</string>

@@ -12,12 +12,15 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
+import android.widget.Toast
+import cz.magiak.asistent.local.LocalScreen
 import cz.magiak.asistent.meeting.Meeting
 import cz.magiak.asistent.meeting.MeetingService
 
@@ -122,6 +125,14 @@ class SettingsActivity : Activity() {
         }, below(32))
         page.addView(label(getString(R.string.meeting_voice_hint, Config.WAKE_LABEL), 14f, GRAY))
 
+        // The home screen from a sentence, written by the model in the phone instead of Claude. Typed for now:
+        // the speech model in the phone only hears the wake words.
+        page.addView(Button(this).apply {
+            text = getString(R.string.local_screen)
+            setOnClickListener { askLocalScreen() }
+        }, below(32))
+        page.addView(label(getString(R.string.local_screen_hint), 14f, GRAY))
+
         page.addView(Button(this).apply {
             text = getString(R.string.reset_defaults)
             setOnClickListener { confirmReset() }
@@ -155,6 +166,27 @@ class SettingsActivity : Activity() {
         Session.launchRequestedAt = 0L
         startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         finish()
+    }
+
+    private fun askLocalScreen() {
+        val input = EditText(this).apply {
+            hint = getString(R.string.local_screen_example)
+            isSingleLine = true
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.local_screen)
+            .setView(input)
+            .setPositiveButton(R.string.local_screen_show) { _, _ ->
+                val sentence = input.text.toString().trim().ifEmpty { getString(R.string.local_screen_example) }
+                val app = applicationContext
+                Thread({
+                    val result = LocalScreen.show(app, sentence)
+                    page.post { Toast.makeText(app, result, Toast.LENGTH_LONG).show() }
+                }, "local-screen").start()
+                finish()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun confirmReset() {

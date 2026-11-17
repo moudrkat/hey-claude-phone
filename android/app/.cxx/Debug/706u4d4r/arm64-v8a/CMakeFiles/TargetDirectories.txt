@@ -1,0 +1,3 @@
+/home/kacka/projekty/hey-claude-phone/android/app/.cxx/Debug/706u4d4r/arm64-v8a/CMakeFiles/tinyhouse.dir
+/home/kacka/projekty/hey-claude-phone/android/app/.cxx/Debug/706u4d4r/arm64-v8a/CMakeFiles/edit_cache.dir
+/home/kacka/projekty/hey-claude-phone/android/app/.cxx/Debug/706u4d4r/arm64-v8a/CMakeFiles/rebuild_cache.dir

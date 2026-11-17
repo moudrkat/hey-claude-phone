@@ -21,6 +21,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import cz.magiak.asistent.mcp.Connector
+import cz.magiak.asistent.local.LocalScreen
 import cz.magiak.asistent.meeting.Meeting
 import cz.magiak.asistent.meeting.MeetingArchive
 import cz.magiak.asistent.meeting.MeetingService
@@ -369,6 +370,12 @@ class MainActivity : Activity() {
                 Log.i(Config.TAG, "Meeting: find\n" + MeetingArchive.find(this, intent.getStringExtra("query").orEmpty()))
                 return
             }
+        }
+        // The home screen from a sentence, written by the model in the phone instead of Claude:
+        // adb shell am start -n cz.magiak.asistent/.MainActivity --es local "put a big clock and the bitcoin price there"
+        intent.getStringExtra("local")?.let { sentence ->
+            Thread({ Log.i(Config.TAG, "Local: " + LocalScreen.show(this, sentence)) }, "local-screen").start()
+            return
         }
         trial = intent.getStringExtra("demo") == "trial"
         // Heard words with their confidence are for tuning only; on the desk they were noise.

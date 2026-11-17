@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="{lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+/*colors*/
+html, body { margin: 0; height: 100%; background: var(--surface); color: var(--text); font-family: sans-serif; }
+body { box-sizing: border-box; padding: 32px 90px 32px 40px; display: flex; flex-direction: column; justify-content: center; }
+.big { font: 100px/1 serif; letter-spacing: -0.02em; color: var(--clock); margin: 4px 0 10px; }
+.line { font: 34px/1.25 serif; margin: 4px 0; }
+.small { font-size: 20px; color: var(--muted); margin: 4px 0; }
+</style>
+</head>
+<body>
+<script>
+// The rows come from a program a small model in the phone wrote (LocalScreen.kt). A row is text with markers
+// where a live value belongs: time, date, weather, tomorrow, sunrise, sunset, air, price, days until, a headline,
+// a name day. Where each value lives is known here,
+// not to the model. Values refresh once a minute; on an error the last one stays.
+var ROWS = {rows};
+var SKY = {0: 'clear', 1: 'mostly clear', 2: 'partly cloudy', 3: 'cloudy', 45: 'fog', 48: 'fog', 51: 'drizzle', 53: 'drizzle', 55: 'drizzle',
+           61: 'rain', 63: 'rain', 65: 'heavy rain', 71: 'snow', 73: 'snow', 75: 'heavy snow', 80: 'showers', 81: 'showers', 82: 'heavy showers',
+           95: 'storm', 96: 'storm', 99: 'storm'};
+var COIN = {bitcoin: 'bitcoin', btc: 'bitcoin', ethereum: 'ethereum', eth: 'ethereum', solana: 'solana', dogecoin: 'dogecoin'};
+var MONEY = {euro: 'EUR', dollar: 'USD', pound: 'GBP'};
+var places = {}, last = {};
+
+function spaced(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+async function weather(q) {
+  var p = await place(q);
+  var f = await asistent.json('https://api.open-meteo.com/v1/forecast?latitude=' + p.latitude + '&longitude=' + p.longitude +
+                              '&current=temperature_2m,weather_code');
+  return Math.round(f.current.temperature_2m) + ' °C, ' + (SKY[f.current.weather_code] || '');
+}
+async function price(q) {
+  if (COIN[q]) {
+    var c = await asistent.json('https://api.coingecko.com/api/v3/simple/price?ids=' + COIN[q] + '&vs_currencies=usd');
+    return spaced(c[COIN[q]].usd) + ' USD';
+  }
+  if (MONEY[q]) {
+    var r = await asistent.json('https://api.frankfurter.app/latest?from=' + MONEY[q] + '&to=CZK');
+    return r.rates.CZK.toFixed(1) + ' CZK';
+  }
+  return '?';
+}
+async function place(q) {
+  if (!places[q]) {
+    var g = await asistent.json('https://geocoding-api.open-meteo.com/v1/search?count=1&name=' + encodeURIComponent(q));
+    if (!g.results) throw new Error('no such place');
+    places[q] = g.results[0];
+  }
+  return places[q];
+}
+async function daily(q) {
+  var p = await place(q);
+  return (await asistent.json('https://api.open-meteo.com/v1/forecast?latitude=' + p.latitude + '&longitude=' + p.longitude +
+    '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=2')).daily;
+}
+async function tomorrow(q) {
+  var d = await daily(q);
+  return Math.round(d.temperature_2m_min[1]) + ' to ' + Math.round(d.temperature_2m_max[1]) + ' \u00b0C, rain ' + d.precipitation_probability_max[1] + '%';
+}
+async function sun(q, which) { return (await daily(q))[which][0].slice(11, 16); }
+async function air(q) {
+  var p = await place(q);
+  var a = (await asistent.json('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + p.latitude + '&longitude=' + p.longitude +
+    '&current=european_aqi')).current.european_aqi;
+  return Math.round(a) + ', ' + (a <= 20 ? 'good' : a <= 40 ? 'fair' : a <= 60 ? 'moderate' : a <= 80 ? 'poor' : 'very poor');
+}
+var MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+var NAMED = {christmas: [11, 25], 'new year': [0, 1], halloween: [9, 31], valentine: [1, 14]};
+function until(q) {                          // "christmas", "26 november", "november 26"
+  var day = null;
+  Object.keys(NAMED).forEach(function (k) { if (q.indexOf(k) >= 0) day = NAMED[k]; });
+  if (!day) {
+    var m = MONTHS.findIndex(function (name) { return q.indexOf(name) >= 0; }), n = (q.match(/\d+/) || [])[0];
+    if (m >= 0 && n) day = [m, Number(n)];
+  }
+  if (!day) return '?';
+  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var then = new Date(now.getFullYear(), day[0], day[1]);
+  if (then < today) then = new Date(now.getFullYear() + 1, day[0], day[1]);
+  var days = Math.round((then - today) / 86400000);
+  return days === 0 ? 'today' : days === 1 ? '1 day' : days + ' days';
+}
+// Headlines from a public feed: the phone's language picks which. The row walks through them, one every 15 s.
+var FEED = '{lang}'.slice(0, 2) === 'cs' ? 'https://ct24.ceskatelevize.cz/rss/hlavni-zpravy' : 'https://feeds.bbci.co.uk/news/rss.xml';
+var headlines = [], turn = 0;
+async function news() {
+  var xml = new DOMParser().parseFromString(await asistent.text(FEED), 'text/xml');
+  var got = Array.prototype.map.call(xml.querySelectorAll('item > title'), function (t) { return t.textContent.trim(); }).filter(Boolean).slice(0, 12);
+  if (got.length) headlines = got;
+  return headlines.length ? headlines[turn % headlines.length] : '?';
+}
+async function nameday() {
+  var d = await asistent.json('https://svatkyapi.cz/api/day');
+  return d.name || d.holidayName || '?';
+}
+function value(mark) {                       // mark: "t", "d", "n", "j", or a letter, "|" and what it is asked for
+  var d = new Date(), q = mark.slice(2);
+  switch (mark[0]) {
+    case 't': return Promise.resolve(d.toLocaleTimeString('{lang}', {hour: '2-digit', minute: '2-digit'}));
+    case 'd': return Promise.resolve(d.toLocaleDateString('{lang}', {weekday: 'long', day: 'numeric', month: 'long'}));
+    case 'w': return weather(q);
+    case 'p': return price(q);
+    case 'f': return tomorrow(q);
+    case 'r': return sun(q, 'sunrise');
+    case 's': return sun(q, 'sunset');
+    case 'a': return air(q);
+    case 'u': return Promise.resolve(until(q));
+    case 'n': return news();
+    case 'j': return nameday();
+  }
+  return Promise.resolve('?');
+}
+var spans = [];
+ROWS.forEach(function (row) {
+  var div = document.createElement('div');
+  div.className = ['big', 'line', 'small'][row.size];
+  row.text.split(/(\u0001[^\u0002]*\u0002)/).forEach(function (part) {
+    if (part.charCodeAt(0) !== 1) { div.appendChild(document.createTextNode(part)); return; }
+    var span = document.createElement('span');
+    span.textContent = '…';
+    spans.push([span, part.slice(1, -1)]);
+    div.appendChild(span);
+  });
+  document.body.appendChild(div);
+});
+function refresh() {
+  spans.forEach(function (s) {
+    value(s[1]).then(function (v) { last[s[1]] = v; s[0].textContent = v; })
+               .catch(function () { s[0].textContent = last[s[1]] || '?'; });
+  });
+}
+refresh();
+setInterval(refresh, 60000);
+setInterval(function () {                    // the next headline, without asking the feed again
+  if (!headlines.length) return;
+  turn++;
+  spans.forEach(function (s) { if (s[1] === 'n') s[0].textContent = headlines[turn % headlines.length]; });
+}, 15000);
+</script>
+</body>
+</html>
