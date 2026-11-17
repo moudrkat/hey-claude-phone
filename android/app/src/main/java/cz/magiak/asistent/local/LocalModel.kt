@@ -30,8 +30,10 @@ object LocalModel {
         if (!ensure(context)) return Result("", false, "the local model did not load", false, emptyList(), "")
         // What reaches the model is what it was trained on: plain ASCII, as a speech recogniser would give it.
         val plain = sentence.filter { it.code in 32..126 }.trim()
-        val program = nativeWrite(plain)
-        if (program.isEmpty()) return Result("", false, "that sentence does not fit", false, emptyList(), "")
+        val (hidden, names) = Slots.hide(context, plain)          // names never reach the model
+        val written = nativeWrite(hidden)
+        if (written.isEmpty()) return Result("", false, "that sentence does not fit", false, emptyList(), "")
+        val program = Slots.restore(written, names)
         notSaid(plain, program)?.let { return Result(program, false, "I did not catch that: $it was not said", false, emptyList(), "") }
         val json = JSONObject(nativeRun(program))
         if (!json.getBoolean("ok")) return Result(program, false, json.getString("error"), false, emptyList(), "")
