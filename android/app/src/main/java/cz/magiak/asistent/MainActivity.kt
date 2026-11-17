@@ -1,6 +1,5 @@
 package cz.magiak.asistent
 
-import cz.magiak.asistent.local.LocalScreen
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -22,6 +21,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import cz.magiak.asistent.mcp.Connector
+import cz.magiak.asistent.local.LocalScreen
 import cz.magiak.asistent.meeting.Meeting
 import cz.magiak.asistent.meeting.MeetingArchive
 import cz.magiak.asistent.meeting.MeetingService
