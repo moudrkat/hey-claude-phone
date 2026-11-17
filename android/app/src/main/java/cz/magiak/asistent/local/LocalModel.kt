@@ -32,11 +32,43 @@ object LocalModel {
         val plain = sentence.filter { it.code in 32..126 }.trim()
         val program = nativeWrite(plain)
         if (program.isEmpty()) return Result("", false, "that sentence does not fit", false, emptyList(), "")
+        notSaid(plain, program)?.let { return Result(program, false, "I did not catch that: $it was not said", false, emptyList(), "") }
         val json = JSONObject(nativeRun(program))
         if (!json.getBoolean("ok")) return Result(program, false, json.getString("error"), false, emptyList(), "")
         val rows = json.getJSONArray("rows").let { a -> (0 until a.length()).map { a.getJSONObject(it).run { getInt("size") to getString("text") } } }
         return Result(program, true, "", json.getBoolean("screen"), rows, json.getString("said"))
     }
+
+    /**
+     * A check outside the model: what a program asks a source for must have been said. The model should copy the
+     * town, the coin or the day out of the sentence; when it writes weather("Paris") for a sentence about Prague,
+     * no rule of the language is broken and the screen would be wrong with a straight face. One slip of the finger
+     * is allowed ("bitcon" for "bitcoin"), another word is not. Returns the first call that was not said, or null.
+     */
+    fun notSaid(sentence: String, program: String): String? {
+        val heard = WORD.findAll(sentence.lowercase().replace("'", "")).map { it.value }.toList()
+        for (call in ASKED.findAll(program)) {
+            val (fn, what) = call.destructured
+            for (w in WORD.findAll(what.lowercase().replace("'", "")).map { it.value })
+                if (w !in SMALL && heard.none { near(w, it) }) return "$fn(\"$what\")"
+        }
+        return null
+    }
+
+    private fun near(a: String, b: String): Boolean {
+        if (a == b) return true
+        if (minOf(a.length, b.length) < 4 || kotlin.math.abs(a.length - b.length) > 1) return false
+        if (a.length == b.length) {
+            val d = a.indices.filter { a[it] != b[it] }
+            return d.size == 1 || (d.size == 2 && d[1] == d[0] + 1 && a[d[0]] == b[d[1]] && a[d[1]] == b[d[0]])
+        }
+        val (s, l) = if (a.length < b.length) a to b else b to a
+        return l.indices.any { l.removeRange(it, it + 1) == s }
+    }
+
+    private val ASKED = Regex("""\b(weather|tomorrow|sunrise|sunset|air|price|until)\("([^"]*)"\)""")
+    private val WORD = Regex("[a-z0-9]+")
+    private val SMALL = setOf("the", "a", "an", "my", "of", "in")
 
     @JvmStatic private external fun nativeLoad(model: ByteArray): Boolean
     @JvmStatic private external fun nativeWrite(sentence: String): String
