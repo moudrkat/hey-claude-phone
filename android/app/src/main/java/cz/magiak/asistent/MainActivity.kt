@@ -1,5 +1,6 @@
 package cz.magiak.asistent
 
+import cz.magiak.asistent.local.LocalScreen
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -369,6 +370,12 @@ class MainActivity : Activity() {
                 Log.i(Config.TAG, "Meeting: find\n" + MeetingArchive.find(this, intent.getStringExtra("query").orEmpty()))
                 return
             }
+        }
+        // The home screen from a sentence, written by the model in the phone instead of Claude:
+        // adb shell am start -n cz.magiak.asistent/.MainActivity --es local "put a big clock and the bitcoin price there"
+        intent.getStringExtra("local")?.let { sentence ->
+            Thread({ Log.i(Config.TAG, "Local: " + LocalScreen.show(this, sentence)) }, "local-screen").start()
+            return
         }
         trial = intent.getStringExtra("demo") == "trial"
         // Heard words with their confidence are for tuning only; on the desk they were noise.

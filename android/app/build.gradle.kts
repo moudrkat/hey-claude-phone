@@ -19,6 +19,7 @@ val localProperties = Properties().apply {
 android {
     namespace = "cz.magiak.asistent"
     compileSdk = 36
+    ndkVersion = "27.2.12479018"
 
     defaultConfig {
         applicationId = "cz.magiak.asistent"
@@ -31,6 +32,15 @@ android {
         buildConfigField("String", "PRINTER_HOST", "\"${localProperties.getProperty("printer.host", "")}\"")
         buildConfigField("String", "ELEVENLABS_KEY", "\"${localProperties.getProperty("elevenlabs.key", "")}\"")
         buildConfigField("String", "ANTHROPIC_KEY", "\"${localProperties.getProperty("anthropic.key", "")}\"")
+        // The local model (src/main/cpp): phones only, emulators can add x86_64.
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.31.6"
+        }
     }
 
     buildFeatures {

@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/kacka/projekty/hey-claude-phone/android/app/.cxx/Debug/706u4d4r/armeabi-v7a",
+  "command": "/home/kacka/Android/Sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=armv7-none-linux-androideabi26 --sysroot=/home/kacka/Android/Sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Dtinyhouse_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wno-unused-function -o CMakeFiles/tinyhouse.dir/tinyhouse.c.o -c /home/kacka/projekty/hey-claude-phone/android/app/src/main/cpp/tinyhouse.c",
+  "file": "/home/kacka/projekty/hey-claude-phone/android/app/src/main/cpp/tinyhouse.c",
+  "output": "CMakeFiles/tinyhouse.dir/tinyhouse.c.o"
+}
+]

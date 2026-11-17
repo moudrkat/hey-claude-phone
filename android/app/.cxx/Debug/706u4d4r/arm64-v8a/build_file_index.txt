@@ -1,0 +1,1 @@
+/home/kacka/projekty/hey-claude-phone/android/app/src/main/cpp/CMakeLists.txt

@@ -1,0 +1,1 @@
+/home/kacka/projekty/hey-claude-phone/android/app/build/intermediates/cxx/Debug/706u4d4r/obj/armeabi-v7a

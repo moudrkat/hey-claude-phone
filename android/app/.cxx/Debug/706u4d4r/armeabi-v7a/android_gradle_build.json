@@ -1,0 +1,38 @@
+{
+  "buildFiles": [
+    "/home/kacka/projekty/hey-claude-phone/android/app/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/kacka/Android/Sdk/cmake/3.31.6/bin/ninja",
+      "-C",
+      "/home/kacka/projekty/hey-claude-phone/android/app/.cxx/Debug/706u4d4r/armeabi-v7a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/kacka/Android/Sdk/cmake/3.31.6/bin/ninja",
+    "-C",
+    "/home/kacka/projekty/hey-claude-phone/android/app/.cxx/Debug/706u4d4r/armeabi-v7a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "tinyhouse::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "armeabi-v7a",
+      "artifactName": "tinyhouse",
+      "output": "/home/kacka/projekty/hey-claude-phone/android/app/build/intermediates/cxx/Debug/706u4d4r/obj/armeabi-v7a/libtinyhouse.so",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/home/kacka/Android/Sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/home/kacka/Android/Sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": []
+}
